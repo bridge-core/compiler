@@ -1,0 +1,21 @@
+{
+    "version": "0.1.0",
+    "author": "solvedDev",
+    "name": "bridge-compiler",
+    "description": "Minecraft add-on utility. Built for the next generation of bridge.",
+    "license": "MIT",
+    "scripts": {
+        "test": "jest"
+    },
+    "dependencies": {
+        "lodash": "^4.17.15"
+    },
+    "devDependencies": {
+        "@types/jest": "^24.0.25",
+        "@types/lodash": "^4.14.149",
+        "@types/node": "^13.1.1",
+        "jest": "^24.9.0",
+        "ts-jest": "^24.2.0",
+        "typescript": "^3.7.4"
+    }
+}
