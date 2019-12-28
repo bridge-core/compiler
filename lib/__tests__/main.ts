@@ -8,7 +8,7 @@ test("register(type, ext, handler)", () => {
         private data: any;
         async resolve() {
             try {
-                this.data = (await fs.readFile(this.from_path)).toJSON();
+                this.data = (await fs.readFile(this.from_path)).toJSON() || {};
                 const { "minecraft:entity": { components, description } } = this.data;
                 return <string[]> description.tags || [];
             } catch(e) {
