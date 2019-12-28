@@ -1,1 +1,0 @@
-{"version":3,"file":"BasePath.js","sourceRoot":"","sources":["../../lib/Env/BasePath.ts"],"names":[],"mappings":";;AAAA,IAAI,SAAiB,CAAC;AAEtB,SAAgB,GAAG;IACf,OAAO,SAAS,CAAC;AACrB,CAAC;AAFD,kBAEC;AACD,SAAgB,GAAG,CAAC,SAAiB;IACjC,SAAS,GAAG,SAAS,CAAC;AAC1B,CAAC;AAFD,kBAEC;AAED,kBAAe;IACX,GAAG;IACH,GAAG;CACN,CAAA"}

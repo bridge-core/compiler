@@ -1,1 +1,0 @@
-{"version":3,"file":"DefaultHandler.js","sourceRoot":"","sources":["../../lib/FileHandler/DefaultHandler.ts"],"names":[],"mappings":";;AAAA,6CAA2C;AAC3C,2BAAoC;AAEpC,MAAa,cAAe,SAAQ,wBAAW;IAC3C,KAAK,CAAC,OAAO;QACT,OAAO,EAAE,CAAC;IACd,CAAC;IACD,KAAK,CAAC,SAAS;QACX,MAAM,aAAE,CAAC,QAAQ,CAAC,IAAI,CAAC,SAAS,EAAE,IAAI,CAAC,OAAO,CAAC,CAAC;IACpD,CAAC;CACJ;AAPD,wCAOC"}
