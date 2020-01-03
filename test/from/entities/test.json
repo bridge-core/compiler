@@ -1,0 +1,10 @@
+{
+    "minecraft:entity": {
+        "description": {
+            "identifier": "test",
+            "tags": [
+                "solved:tag"
+            ]
+        }
+    }
+}

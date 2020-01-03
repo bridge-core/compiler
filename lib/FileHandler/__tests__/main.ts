@@ -4,12 +4,9 @@ import BasePath from "../../Env/BasePath";
 test("register, get, unregister", () => {
     BasePath.set("C://some/random/path");
     register("entity", ".json", class extends FileHandler {
-        async resolve() {
-            return [];
-        }
-
-        async transform() {
-        }
+        async declare() {}
+        async register() {}
+        async resolve() {}
     });
 
     expect(get("C://some/random/path/entities/test.json", "C://some/random/end/location/entities/test.json")).toBeInstanceOf(FileHandler);

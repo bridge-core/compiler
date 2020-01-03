@@ -5,8 +5,9 @@ export interface FileHandlerConstructor {
 }
 
 export interface IFileHandler {
-    resolve(dependency_map: Map<string, Dependency>): Promise<string[]>;
-    transform(): Promise<void>;
+    register(): Promise<void>;
+    resolve(): Promise<void>;
+    declare(): Promise<void>;
     file_path: string;
 }
 
@@ -17,6 +18,7 @@ export abstract class FileHandler implements IFileHandler {
         return this.from_path;
     }
 
-    abstract resolve(dependency_map: Map<string, Dependency>): Promise<string[]>;
-    abstract transform(): Promise<void>;
+    abstract register(): Promise<void>;
+    abstract resolve(): Promise<void>;
+    abstract declare(): Promise<void>;
 } 

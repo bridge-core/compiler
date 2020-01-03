@@ -1,0 +1,10 @@
+{
+    "bridge:tag": {
+        "description": {
+            "identifier": "solved:tag"
+        },
+        "components": {
+            "solved:test": {}
+        }
+    }
+}

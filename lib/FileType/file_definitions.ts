@@ -64,6 +64,10 @@ export default [
         "problems": [ "entity", "format_version" ]
     },
     {
+        "id": "entity_tag",
+        "includes": "tag/"
+    },
+    {
         "id": "feature",
         "includes": "features/",
         "file_viewer": "json",

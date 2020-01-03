@@ -26,15 +26,19 @@ export async function compile(from_path: string, to_path: string) {
     BasePath.set(from_path);
     const HANDLERS = await collectHandlers(from_path, to_path);
     HANDLERS.forEach(h => DependencyMap.set(h.file_path, new Dependency(h)));
-    //Call the resolve method on all FileHandlers so they get the chance to register dependencies
+    //Call the declare method so files can communicate e.g. their identifier
     await Promise.all(
-        HANDLERS.map(h => h.resolve(DependencyMap))
+        HANDLERS.map(h => h.declare())
+    );
+    //Call the declare method on all FileHandlers so they get the chance to register dependencies
+    await Promise.all(
+        HANDLERS.map(h => h.register())
     );
     
-    //Resolve dependencies in the correct order and call the transform method
+    //Resolve dependencies in the correct order
     await Promise.all(
         Array.from(resolveDependencies(DependencyMap))
-            .map(dep => dep.handler.transform())
+            .map(dep => dep.handler.resolve())
     );
 }
 export { register } from "./FileHandler/main";
