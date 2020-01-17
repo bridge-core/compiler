@@ -1,44 +1,58 @@
-import { promises as fs } from "fs";
-import { join } from "path";
-import BasePath from "./Env/BasePath";
-import { get } from "./FileHandler/main";
-import { IFileHandler } from "./FileHandler/HandlerDef";
-import { DependencyMap } from "./DependencyGraph/Map";
-import { Dependency } from "./DependencyGraph/Dependency";
-import { resolve as resolveDependencies } from "./DependencyGraph/Resolve";
+import { createFastAccessCache } from "./FastAccessCache/main"
+import path from "path"
+import { createDependencyMap } from "./DependencyGraph/Map"
+import { createResolver } from "./DependencyGraph/Resolve"
+import { createPackIterator } from "./PackIterator/main"
+import { createFileManager } from "./FileHandler/Create"
+import { createFileType } from "./FileType/main"
+import { createDefaultFileHandler } from "./FileHandler/Default"
+import { promises as fs } from "fs"
 
-async function collectHandlers(from_path: string, to_path: string) {
-    let content = await fs.readdir(from_path, { withFileTypes: true });
-    let handlers: IFileHandler[] = [];
 
-    await Promise.all(
-        content.map(async dirent => {
-            if(dirent.isDirectory())
-                handlers.push(...(await collectHandlers(join(from_path, dirent.name), join(to_path, dirent.name))))
-            else
-                handlers.push(get(join(from_path, dirent.name), join(to_path, dirent.name)));
-        })
-    );
-    return handlers;
+export async function createProject(fromPath: string, toPath: string) {
+    let dependencyMap = createDependencyMap()
+    let lightningCache = createFastAccessCache<string>()
+    let resolver = createResolver(dependencyMap)
+    let fileManager = createFileManager()
+    let fileType = createFileType(fromPath)
+
+    return {
+        FileManager: {
+            add: fileManager.add
+        },
+
+        async build() {
+            let filePaths = await createPackIterator(fromPath).allFiles
+            //Create fileHandlers & onCachePass
+            let handlers = await Promise.all(
+                filePaths.map(async ([absPath, relPath]) => {
+                    let currFileType = fileType.get(absPath)
+                    let handler = fileManager.get(currFileType, path.extname(absPath))
+                    let config = {
+                        dependencyMap,
+                        filePath: absPath,
+                        basePath: fromPath,
+                        cache: lightningCache.add(currFileType, absPath),
+                        fileData: await fs.readFile(absPath) 
+                    }
+
+                    if(handler === undefined)
+                        return await createDefaultFileHandler(config).onCachePass()
+                    else
+                        return await handler(config).onCachePass()
+                })
+            )
+
+            await Promise.all(handlers.map(async handler => await handler.onDependencyPass()))
+            let updateOrder = resolver.resolve()
+            await Promise.all(handlers.map(async handler => await handler.compile()))
+        },
+
+        async buildSingle() {
+
+        },
+        async buildLightningCache() {
+
+        }
+    }
 }
-
-export async function compile(from_path: string, to_path: string) {
-    BasePath.set(from_path);
-    const HANDLERS = await collectHandlers(from_path, to_path);
-    HANDLERS.forEach(h => DependencyMap.set(h.file_path, new Dependency(h)));
-    //Call the declare method so files can communicate e.g. their identifier
-    await Promise.all(
-        HANDLERS.map(h => h.declare())
-    );
-    //Call the declare method on all FileHandlers so they get the chance to register dependencies
-    await Promise.all(
-        HANDLERS.map(h => h.register())
-    );
-    
-    //Resolve dependencies in the correct order
-    await Promise.all(
-        Array.from(resolveDependencies(DependencyMap))
-            .map(dep => dep.handler.resolve())
-    );
-}
-export { register } from "./FileHandler/main";
