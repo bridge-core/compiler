@@ -1,21 +1,9 @@
-import { Dependency } from "./Dependency";
+import { INode } from "./Node";
 
-export function resolve(dependency_map: Map<string, Dependency>) {
-    let resolved = new Set<Dependency>();
-
-    dependency_map.forEach(dep => {
-        if(!resolved.has(dep)) {
-            resolveSingle(dep, resolved, new Set<Dependency>());
-        }
-    });
-
-    return resolved;
-}
-
-function resolveSingle(dep: Dependency, resolved: Set<Dependency>, unresolved: Set<Dependency>) {
+function resolveSingle(dep: INode, resolved: Set<INode>, unresolved: Set<INode>) {
     unresolved.add(dep);
 
-    for(let d of dep.getDependencies()) {
+    for(let d of dep.dependencies) {
         if(!resolved.has(d)) {
             if(unresolved.has(d))
                 throw new Error("Circular dependency detected!");
@@ -25,4 +13,20 @@ function resolveSingle(dep: Dependency, resolved: Set<Dependency>, unresolved: S
 
     resolved.add(dep);
     unresolved.delete(dep);
+}
+
+export function createResolver(dependencyMap: Map<string, INode>) {
+    return {
+        resolve() {
+            let resolved = new Set<INode>();
+
+            dependencyMap.forEach(dep => {
+                if(!resolved.has(dep)) {
+                    resolveSingle(dep, resolved, new Set<INode>());
+                }
+            });
+
+            return resolved;
+        }
+    }
 }

@@ -1,3 +1,5 @@
-import { Dependency } from "./Dependency";
+import { INode } from "./Node";
 
-export const DependencyMap = new Map<string, Dependency>();
+export function createDependencyMap() {
+    return new Map<string, INode>()
+}
