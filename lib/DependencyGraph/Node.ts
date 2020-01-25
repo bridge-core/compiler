@@ -1,6 +1,9 @@
+import { IFileHandler } from "../FileHandler/main"
+
 export interface INode {
     readonly dependencies: Set<INode>
     readonly updateNodes: Set<INode>
+    readonly fileHandler: IFileHandler
 
     add: (dep: INode) => void
     remove: (dep: INode) => void
@@ -8,7 +11,7 @@ export interface INode {
     removeUpdateNode: (dep: INode) => void
 }
 
-export function createNode(): INode {
+export function createNode(fileHandler: IFileHandler): INode {
     let dependencies = new Set<INode>()
     let updateNodes = new Set<INode>()
 
@@ -18,6 +21,9 @@ export function createNode(): INode {
         },
         get updateNodes() {
             return updateNodes
+        },
+        get fileHandler() {
+            return fileHandler
         },
     
         add(dep: INode) {

@@ -7,6 +7,8 @@ import { createFileManager } from "./FileHandler/Create"
 import { createFileType } from "./FileType/main"
 import { createDefaultFileHandler } from "./FileHandler/Default"
 import { promises as fs } from "fs"
+import { IFileHandler } from "./FileHandler/main"
+import { createNode } from "./DependencyGraph/Node"
 
 
 export async function createProject(fromPath: string, toPath: string) {
@@ -27,7 +29,7 @@ export async function createProject(fromPath: string, toPath: string) {
             let handlers = await Promise.all(
                 filePaths.map(async ([absPath, relPath]) => {
                     let currFileType = fileType.get(absPath)
-                    let handler = fileManager.get(currFileType, path.extname(absPath))
+                    let createHandler = fileManager.get(currFileType, path.extname(absPath))
                     let config = {
                         dependencyMap,
                         filePath: absPath,
@@ -36,16 +38,27 @@ export async function createProject(fromPath: string, toPath: string) {
                         fileData: await fs.readFile(absPath) 
                     }
 
-                    if(handler === undefined)
-                        return await createDefaultFileHandler(config).onCachePass()
+                    let handler: IFileHandler
+                    if(createHandler === undefined)
+                        handler = await createDefaultFileHandler(config).onCachePass()
                     else
-                        return await handler(config).onCachePass()
+                        handler = await createHandler(config).onCachePass()
+
+                    dependencyMap.set(absPath, createNode(handler))
+                    return handler;
                 })
             )
 
             await Promise.all(handlers.map(async handler => await handler.onDependencyPass()))
-            let updateOrder = resolver.resolve()
-            await Promise.all(handlers.map(async handler => await handler.compile()))
+            let sortedNodes = Array.from(resolver.resolve())
+            await Promise.all(
+                sortedNodes.map(
+                    async node => 
+                        node.fileHandler.fileData = await node.fileHandler.compile(
+                            Array.from(node.dependencies).map(dep => dep.fileHandler.fileData)
+                        )
+                )
+            )
         },
 
         async buildSingle() {
