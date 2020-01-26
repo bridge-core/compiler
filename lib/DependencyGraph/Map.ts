@@ -1,5 +1,5 @@
-import { INode } from "./Node";
+import { INode } from './Node'
 
 export function createDependencyMap() {
-    return new Map<string, INode>()
+	return new Map<string, INode>()
 }

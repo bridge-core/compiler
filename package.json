@@ -7,8 +7,12 @@
     "scripts": {
         "test": "jest"
     },
+    "dependencies": {
+        "lodash.escaperegexp": "^4.1.2"
+    },
     "devDependencies": {
         "@types/jest": "^24.0.25",
+        "@types/lodash.escaperegexp": "^4.1.6",
         "@types/node": "^13.1.4",
         "jest": "^24.9.0",
         "ts-jest": "^24.2.0",
