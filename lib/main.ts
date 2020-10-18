@@ -1,74 +1,33 @@
-import { createFastAccessCache } from './FastAccessCache/main'
-import path from 'path'
-import { createDependencyMap } from './DependencyGraph/Map'
-import { createResolver } from './DependencyGraph/Resolve'
-import { createPackIterator } from './PackIterator/main'
-import { createFileManager } from './FileHandler/Create'
-import { createFileType } from './FileType/main'
-import { createDefaultFileHandler } from './FileHandler/Default'
-import { promises as fs } from 'fs'
-import { IFileHandler } from './FileHandler/main'
-import { createNode } from './DependencyGraph/Node'
+import yargs from 'yargs'
+import { buildAddOn } from './build'
 
-export async function createProject(fromPath: string, toPath: string) {
-	let dependencyMap = createDependencyMap()
-	let lightningCache = createFastAccessCache<string>()
-	let resolver = createResolver(dependencyMap)
-	let fileManager = createFileManager()
-	let fileType = createFileType(fromPath)
+const compilerOptions = yargs
+	.config('config', 'Run bridge-compiler with the given config', (path) =>
+		require(path)
+	)
+	.usage('Usage: $0 --bp <path> --obp <path> --rp <path> --orp <path>')
+	.usage('Usage: $0 --config <path>')
+	.option('bp', {
+		describe: 'Path to your behavior pack',
+		type: 'string',
+		demandOption: true,
+	})
+	.option('obp', {
+		describe: 'Where to save the compiled behavior pack',
+		type: 'string',
+		demandOption: true,
+	})
+	.option('rp', {
+		describe: 'Path to your resource pack',
+		type: 'string',
+		demandOption: true,
+	})
+	.option('orp', {
+		describe: 'Where to save the compiled resource pack',
+		type: 'string',
+		demandOption: true,
+	}).argv
 
-	return {
-		FileManager: {
-			add: fileManager.add,
-		},
+export type TCompilerOptions = typeof compilerOptions
 
-		async build() {
-			let filePaths = await createPackIterator(fromPath).allFiles
-			//Create fileHandlers & onCachePass
-			let handlers = await Promise.all(
-				filePaths.map(async ([absPath, relPath]) => {
-					let currFileType = fileType.get(absPath)
-					let createHandler = fileManager.get(
-						currFileType,
-						path.extname(absPath)
-					)
-					let config = {
-						dependencyMap,
-						filePath: absPath,
-						basePath: fromPath,
-						cache: lightningCache.add(currFileType, absPath),
-						fileData: await fs.readFile(absPath),
-					}
-
-					let handler: IFileHandler
-					if (createHandler === undefined)
-						handler = await createDefaultFileHandler(
-							config
-						).onCachePass()
-					else handler = await createHandler(config).onCachePass()
-
-					dependencyMap.set(absPath, createNode(handler))
-					return handler
-				})
-			)
-
-			await Promise.all(
-				handlers.map(async handler => await handler.onDependencyPass())
-			)
-			let sortedNodes = Array.from(resolver.resolve())
-			await Promise.all(
-				sortedNodes.map(
-					async node =>
-						(node.fileHandler.fileData = await node.fileHandler.compile(
-							Array.from(node.dependencies).map(
-								dep => dep.fileHandler.fileData
-							)
-						))
-				)
-			)
-		},
-
-		async buildSingle() {},
-		async buildLightningCache() {},
-	}
-}
+buildAddOn(compilerOptions)

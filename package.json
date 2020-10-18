@@ -1,21 +1,25 @@
 {
-    "version": "0.1.0",
-    "author": "solvedDev",
-    "name": "bridge-compiler",
-    "description": "Minecraft add-on utility. Powers bridge.'s custom addon syntax",
-    "license": "MIT",
-    "scripts": {
-        "test": "jest"
-    },
-    "dependencies": {
-        "lodash.escaperegexp": "^4.1.2"
-    },
-    "devDependencies": {
-        "@types/jest": "^24.0.25",
-        "@types/lodash.escaperegexp": "^4.1.6",
-        "@types/node": "^13.1.4",
-        "jest": "^24.9.0",
-        "ts-jest": "^24.2.0",
-        "typescript": "^3.7.4"
-    }
+	"version": "0.1.1",
+	"author": "solvedDev",
+	"name": "bridge-compiler",
+	"description": "Minecraft add-on utility. Powers bridge.'s custom addon syntax",
+	"license": "MIT",
+	"main": "dist/main.js",
+	"scripts": {
+		"dev": "tsc && node ./dist/main.js --config ./test/bridge.config.js",
+		"test": "jest"
+	},
+	"dependencies": {
+		"bridge-data": "^1.1.16",
+		"lodash.escaperegexp": "^4.1.2",
+		"yargs": "^16.1.0"
+	},
+	"devDependencies": {
+		"@types/jest": "^24.0.25",
+		"@types/lodash.escaperegexp": "^4.1.6",
+		"@types/node": "^13.1.4",
+		"jest": "^26.5.3",
+		"ts-jest": "^26.4.1",
+		"typescript": "^3.7.4"
+	}
 }
