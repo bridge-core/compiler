@@ -136,7 +136,7 @@ export async function buildAddOn({
 			if (transformedFile) node.fileContent = transformedFile
 		}
 		// "afterTransform" pass
-		for (const plugin of resolvePlugins) {
+		for (const plugin of resolvePlugins.reverse()) {
 			const transformedFile = await plugin.afterTransform?.(node)
 			if (transformedFile) node.fileContent = transformedFile
 		}
