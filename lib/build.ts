@@ -86,6 +86,11 @@ export async function buildAddOn({
 	orp,
 	resolve: resolveConfig,
 }: TCompilerOptions) {
+	// Delete old output
+	await Promise.all([
+		fs.rmdir(obp, { recursive: true }),
+		fs.rmdir(orp, { recursive: true })
+	])
 	// Create output directories
 	await Promise.all([
 		fs.mkdir(obp, { recursive: true }),
