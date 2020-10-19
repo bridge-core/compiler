@@ -5,14 +5,14 @@ const compilerOptions = yargs
 	.config('config', 'Run bridge-compiler with the given config', (path) =>
 		require(path)
 	)
-	.usage('Usage: $0 --bp <path> --obp <path> --rp <path> --orp <path>')
-	.usage('Usage: $0 --config <path>')
+	.usage('Usage: bridge-compiler --config <path>')
 	.option('bp', {
 		describe: 'Path to your behavior pack',
 		type: 'string',
 		demandOption: true,
 	})
 	.option('obp', {
+		alias: 'outputbp',
 		describe: 'Where to save the compiled behavior pack',
 		type: 'string',
 		demandOption: true,
@@ -23,6 +23,7 @@ const compilerOptions = yargs
 		demandOption: true,
 	})
 	.option('orp', {
+		alias: 'outputrp',
 		describe: 'Where to save the compiled resource pack',
 		type: 'string',
 		demandOption: true,
