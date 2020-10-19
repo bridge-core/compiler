@@ -17,7 +17,6 @@
 		"bridge-compiler": "bin/main.cjs.js"
 	},
 	"dependencies": {
-		"bridge-data": "^1.1.16",
 		"yargs": "^16.1.0"
 	},
 	"devDependencies": {
