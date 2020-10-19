@@ -1,27 +1,25 @@
 {
-    "compileOnSave": true,
-    "compilerOptions": {
-        /* Basic Options */
-        "target": "ESNext",
-        "module": "CommonJS",
-        "outDir": "./dist/",
-        "rootDir": "./lib/",
-        "composite": true,
-        "removeComments": true,
-        "sourceMap": true,
+	"compileOnSave": true,
+	"compilerOptions": {
+		/* Basic Options */
+		"target": "ES2018",
+		"module": "CommonJS",
+		"outDir": "./dist/",
+		"rootDir": "./lib/",
+		"composite": true,
+		"removeComments": true,
+		"sourceMap": true,
 
-        /* Strict Type-Checking Options */
-        "strict": true,
-        "strictFunctionTypes": true,
-        "noImplicitAny": true,
-        
+		/* Strict Type-Checking Options */
+		"strict": true,
+		"strictFunctionTypes": true,
+		"noImplicitAny": true,
 
-        /* Additional Checks */
-        "esModuleInterop": true,
-        "resolveJsonModule": true
-    },
+		/* Additional Checks */
+		"esModuleInterop": true,
+		"resolveJsonModule": true
+	},
+	"include": ["lib/**/*.json", "lib/**/*.ts"],
 
-    "types": [
-        "node"
-    ]
+	"types": ["node"]
 }

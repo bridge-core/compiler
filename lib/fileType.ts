@@ -1,15 +1,17 @@
-import getFileTypes from 'bridge-data/dist/file-definitions'
+import fileTypes from './file_definitions.json'
 
-const fileTypes = getFileTypes()
-
-export function get(path: string, fromRP = false) {
+export function get(path: string, fromRp = false) {
 	path = path.replace(/\\/g, '/')
 
 	for (const { id, rp_definition, includes } of fileTypes) {
-		if (!!rp_definition !== !fromRP) continue
+		if (!!rp_definition === !fromRp) continue
 
-		if (path.startsWith(`./${includes}`)) return id ?? 'unknown'
+		if (path.startsWith(includes)) {
+			// console.log(id ?? 'unknown')
+			return id ?? 'unknown'
+		}
 	}
 
+	// console.log('unknown')
 	return 'unknown'
 }
