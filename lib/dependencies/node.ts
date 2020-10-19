@@ -5,6 +5,7 @@ export interface INode {
 	readonly matchPath: string
 	readonly isRpFile: boolean
 	fileContent: unknown
+	savePath: string
 
 	add: (dep: INode | string) => void
 	remove: (dep: INode | string) => void
@@ -17,6 +18,7 @@ export function createNode(
 ): INode {
 	let dependencies = new Set<INode | string>()
 	let fileContent: unknown
+	let savePath: string
 
 	return {
 		get isRpFile() {
@@ -39,6 +41,12 @@ export function createNode(
 		},
 		set fileContent(val: unknown) {
 			fileContent = val
+		},
+		get savePath() {
+			return savePath
+		},
+		set savePath(val: string) {
+			savePath = val
 		},
 
 		add(dep: INode | string) {

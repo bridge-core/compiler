@@ -5,6 +5,7 @@ export interface INode {
     readonly matchPath: string;
     readonly isRpFile: boolean;
     fileContent: unknown;
+    savePath: string;
     add: (dep: INode | string) => void;
     remove: (dep: INode | string) => void;
 }

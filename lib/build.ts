@@ -52,11 +52,14 @@ export async function resolvePack(
 	dependencyMap: Map<string, INode>,
 	keyRegistry: Map<string, INode>,
 	resolveConfig: FileTypeResolver[],
-	fromRp = false
+	fromRp = false,
+	obp: string,
+	orp: string
 ) {
 	// Create base node
 	const node = createNode(absPath, relPath, fromRp)
 	node.fileContent = await fs.readFile(node.absPath)
+	node.savePath = join(node.isRpFile ? orp : obp, node.relPath)
 	dependencyMap.set(absPath, node)
 
 	// Plugins
@@ -99,7 +102,10 @@ export async function buildAddOn({
 			relPath,
 			dependencyMap,
 			keyRegistry,
-			resolveConfig as any
+			resolveConfig as any,
+			false,
+			obp,
+			orp
 		)
 	)
 	await iterateDir(rp, '.', (absPath, relPath) =>
@@ -109,13 +115,14 @@ export async function buildAddOn({
 			dependencyMap,
 			keyRegistry,
 			resolveConfig as any,
-			true
+			true,
+			obp,
+			orp
 		)
 	)
 
 	// console.log(dependencyMap, keyRegistry)
 	const nodes = [...resolveDependencies(dependencyMap, keyRegistry)]
-	console.log(nodes.map((node) => node.matchPath))
 	// Second pass: Transform and move files
 	for (const node of nodes) {
 		const resolver = getCurrentResolver(node, resolveConfig as any)
@@ -123,12 +130,11 @@ export async function buildAddOn({
 
 		// We don't have any special parsing to do, just copy the file over
 		if (resolvePlugins.length === 0 && !resolver.doNotTransfer) {
-			const savePath = join(node.isRpFile ? orp : obp, node.relPath)
 			try {
-				await fs.mkdir(dirname(savePath), { recursive: true })
+				await fs.mkdir(dirname(node.savePath), { recursive: true })
 			} catch {}
 
-			await fs.copyFile(node.absPath, savePath)
+			await fs.copyFile(node.absPath, node.savePath)
 
 			continue
 		}
@@ -146,12 +152,11 @@ export async function buildAddOn({
 
 		// Write file to destination
 		if (!resolver.doNotTransfer) {
-			const savePath = join(node.isRpFile ? orp : obp, node.relPath)
 			try {
-				await fs.mkdir(dirname(savePath), { recursive: true })
+				await fs.mkdir(dirname(node.savePath), { recursive: true })
 			} catch {}
 
-			await fs.writeFile(savePath, node.fileContent)
+			await fs.writeFile(node.savePath, node.fileContent)
 		}
 	}
 }

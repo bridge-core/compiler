@@ -1,17 +1,17 @@
 {
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"author": "solvedDev",
 	"name": "bridge-compiler",
 	"description": "Minecraft add-on utility. Powers bridge.'s custom addon syntax",
 	"license": "MIT",
 	"main": "dist/main.cjs.js",
-	"cli": "bin/dist.cjs.js",
+	"cli": "bin/main.cjs.js",
 	"module": "dist/main.esm.js",
 	"browser": "dist/main.web.js",
 	"types": "dist/main.d.ts",
 	"scripts": {
 		"build": "rollup -c",
-		"test": "npm run build && npm install -g . && bridge-compiler --config ./test/bridge.config.js && npm uninstall bridge-compiler"
+		"test": "npm run build && npm install -g . && bridge-compiler --config ./test/bridge.config.js"
 	},
 	"bin": {
 		"bridge-compiler": "bin/main.cjs.js"
