@@ -1,9 +1,8 @@
 import { TCompilerOptions } from './main'
-import { promises as fs } from 'fs'
 import { iterateDir } from './iterateDir'
-import { dirname, join } from 'path'
 import { createNode, INode } from './dependencies/node'
 import { resolveDependencies } from './dependencies/resolve'
+import { fs, IFS, setFS } from './fs'
 
 export interface FileTypeResolver {
 	match?: string | ((node: INode) => boolean)
@@ -59,7 +58,7 @@ export async function resolvePack(
 	// Create base node
 	const node = createNode(absPath, relPath, fromRp)
 	node.fileContent = await fs.readFile(node.absPath)
-	node.savePath = join(node.isRpFile ? orp : obp, node.relPath)
+	node.savePath = fs.join(node.isRpFile ? orp : obp, node.relPath)
 	dependencyMap.set(absPath, node)
 
 	// Plugins
@@ -79,17 +78,15 @@ export async function resolvePack(
 	)
 }
 
-export async function buildAddOn({
-	bp,
-	obp,
-	rp,
-	orp,
-	resolve: resolveConfig,
-}: TCompilerOptions) {
+export async function buildAddOn(
+	{ bp, obp, rp, orp, resolve: resolveConfig }: TCompilerOptions,
+	fsArg: IFS
+) {
+	setFS(fsArg)
 	// Delete old output
 	await Promise.all([
 		fs.rmdir(obp, { recursive: true }),
-		fs.rmdir(orp, { recursive: true })
+		fs.rmdir(orp, { recursive: true }),
 	])
 	// Create output directories
 	await Promise.all([
@@ -136,7 +133,7 @@ export async function buildAddOn({
 		// We don't have any special parsing to do, just copy the file over
 		if (resolvePlugins.length === 0 && !resolver.doNotTransfer) {
 			try {
-				await fs.mkdir(dirname(node.savePath), { recursive: true })
+				await fs.mkdir(fs.dirname(node.savePath), { recursive: true })
 			} catch {}
 
 			await fs.copyFile(node.absPath, node.savePath)
@@ -158,7 +155,7 @@ export async function buildAddOn({
 		// Write file to destination
 		if (!resolver.doNotTransfer) {
 			try {
-				await fs.mkdir(dirname(node.savePath), { recursive: true })
+				await fs.mkdir(fs.dirname(node.savePath), { recursive: true })
 			} catch {}
 
 			await fs.writeFile(node.savePath, node.fileContent)

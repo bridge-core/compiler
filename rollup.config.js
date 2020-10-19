@@ -10,25 +10,26 @@ export default (commandLineArgs) => {
 		output: [
 			{
 				banner: '#!/usr/bin/env node',
-				intro: 'const ENVIRONMENT = "cli"',
+				intro: 'const ENVIRONMENT = "cli";',
 				file: pkg.cli,
 				format: 'cjs',
 			},
 			{
-				intro: 'const ENVIRONMENT = "package"',
+				intro: 'const ENVIRONMENT = "package";',
 				file: pkg.main,
 				format: 'cjs',
 			},
 			{
-				intro: 'const ENVIRONMENT = "package"',
+				intro: 'const ENVIRONMENT = "package";',
 				file: pkg.module,
 				format: 'es',
 			},
-			// {
-			// 	file: pkg.browser,
-			// 	format: 'iife',
-			// 	name: 'MoLang',
-			// },
+			{
+				intro: 'const ENVIRONMENT = "package";',
+				file: pkg.browser,
+				format: 'iife',
+				name: 'MoLang',
+			},
 		],
 		plugins: [
 			typescript({

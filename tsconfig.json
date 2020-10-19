@@ -2,7 +2,7 @@
 	"compileOnSave": true,
 	"compilerOptions": {
 		/* Basic Options */
-		"target": "ES2018",
+		"target": "ES2019",
 		"module": "CommonJS",
 		"outDir": "./dist/",
 		"rootDir": "./lib/",

@@ -42,7 +42,7 @@ if (ENVIRONMENT === 'cli') {
 				demandOption: true,
 			}).argv
 
-		buildAddOn(compilerOptions)
+		buildAddOn(compilerOptions, { ...require('fs'), ...require('path') })
 	})()
 }
 

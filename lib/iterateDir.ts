@@ -1,10 +1,9 @@
-import { promises as fs } from 'fs'
-import { join } from 'path'
+import { fs } from './fs'
 
 export async function iterateDir(
 	absPath: string,
 	relPath: string,
-	callback: (absPath: string, relPath: string) => Promise<void> | void
+	callback: (absPath: string, relPath: string) => Promise<void>
 ) {
 	let dirents = await fs.readdir(absPath, { withFileTypes: true })
 	let filePaths: [string, string][] = []
@@ -13,13 +12,13 @@ export async function iterateDir(
 		dirents.map(async (dirent) => {
 			if (dirent.isFile())
 				await callback(
-					join(absPath, dirent.name),
-					join(relPath, dirent.name)
+					fs.join(absPath, dirent.name),
+					fs.join(relPath, dirent.name)
 				)
 			else
 				await iterateDir(
-					join(absPath, dirent.name),
-					join(relPath, dirent.name),
+					fs.join(absPath, dirent.name),
+					fs.join(relPath, dirent.name),
 					callback
 				)
 		})

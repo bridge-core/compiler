@@ -1,3 +1,5 @@
+import { fs } from '../fs'
+
 export interface INode {
 	readonly dependencies: Set<INode | string>
 	readonly absPath: string
@@ -31,7 +33,7 @@ export function createNode(
 			return relPath
 		},
 		get matchPath() {
-			return `${fromRp ? 'RP/' : 'BP/'}${relPath.replace(/\\/g, '/')}`
+			return fs.join(fromRp ? 'RP' : 'BP', relPath.replace(/\\/g, '/'))
 		},
 		get dependencies() {
 			return dependencies
