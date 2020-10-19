@@ -9,6 +9,7 @@
 		"composite": true,
 		"removeComments": true,
 		"sourceMap": true,
+		"declaration": true,
 
 		/* Strict Type-Checking Options */
 		"strict": true,

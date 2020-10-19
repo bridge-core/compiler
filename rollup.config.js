@@ -2,7 +2,6 @@ import pkg from './package.json'
 import commonjs from '@rollup/plugin-commonjs'
 import typescript from 'rollup-plugin-typescript2'
 import { terser } from 'rollup-plugin-terser'
-import json from '@rollup/plugin-json'
 
 export default (commandLineArgs) => {
 	return {
@@ -11,19 +10,25 @@ export default (commandLineArgs) => {
 		output: [
 			{
 				banner: '#!/usr/bin/env node',
+				intro: 'const ENVIRONMENT = "cli"',
+				file: pkg.cli,
+				format: 'cjs',
+			},
+			{
+				intro: 'const ENVIRONMENT = "package"',
 				file: pkg.main,
 				format: 'cjs',
 			},
 			{
-				banner: '#!/usr/bin/env node',
+				intro: 'const ENVIRONMENT = "package"',
 				file: pkg.module,
 				format: 'es',
 			},
-			{
-				file: pkg.browser,
-				format: 'iife',
-				name: 'MoLang',
-			},
+			// {
+			// 	file: pkg.browser,
+			// 	format: 'iife',
+			// 	name: 'MoLang',
+			// },
 		],
 		plugins: [
 			typescript({
@@ -38,7 +43,6 @@ export default (commandLineArgs) => {
 			}),
 			commonjs(),
 			terser(),
-			json(),
 		],
 	}
 }

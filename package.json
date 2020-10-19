@@ -4,13 +4,14 @@
 	"name": "bridge-compiler",
 	"description": "Minecraft add-on utility. Powers bridge.'s custom addon syntax",
 	"license": "MIT",
-	"main": "bin/main.cjs.js",
+	"main": "dist/main.cjs.js",
+	"cli": "bin/dist.cjs.js",
 	"module": "dist/main.esm.js",
 	"browser": "dist/main.web.js",
 	"types": "dist/main.d.ts",
 	"scripts": {
 		"build": "rollup -c",
-		"dev": "tsc && node ./dist/main.js --config ./test/bridge.config.js"
+		"test": "npm run build && npm install -g . && bridge-compiler --config ./test/bridge.config.js && npm uninstall bridge-compiler"
 	},
 	"bin": {
 		"bridge-compiler": "bin/main.cjs.js"
@@ -21,12 +22,11 @@
 	},
 	"devDependencies": {
 		"@rollup/plugin-commonjs": "^15.0.0",
-		"@rollup/plugin-json": "^4.1.0",
 		"@types/node": "^13.1.4",
 		"@types/yargs": "^15.0.9",
+		"rollup": "^2.26.5",
 		"rollup-plugin-terser": "^7.0.0",
 		"rollup-plugin-typescript2": "^0.27.2",
-		"typescript": "^4.0.3",
-		"rollup": "^2.26.5"
+		"typescript": "^4.0.3"
 	}
 }

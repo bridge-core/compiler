@@ -1,16 +1,12 @@
 import { TCompilerOptions } from './main'
 import { promises as fs } from 'fs'
 import { iterateDir } from './iterateDir'
-import { get } from './fileType'
 import { dirname, join } from 'path'
 import { createNode, INode } from './dependencies/node'
 import { resolveDependencies } from './dependencies/resolve'
 
 export interface FileTypeResolver {
-	doNotTransfer?: boolean
-	plugins?: (() => ICompilerPlugin)[]
-}
-export interface FileTypeResolverProcessed {
+	match?: string | ((node: INode) => boolean)
 	doNotTransfer?: boolean
 	plugins?: ICompilerPlugin[]
 }
@@ -25,20 +21,29 @@ export interface ICompilerPlugin {
 	afterTransform?: (node: INode) => Promise<unknown> | unknown
 }
 
-function getPlugins(
-	relPath: string,
-	resolveConfig: Record<string, FileTypeResolverProcessed>,
-	fromRp = false
-) {
-	return getCurrentResolver(relPath, resolveConfig, fromRp).plugins ?? []
+function getPlugins(node: INode, resolveConfig: FileTypeResolver[]) {
+	return getCurrentResolver(node, resolveConfig).plugins ?? []
 }
 
-function getCurrentResolver(
-	relPath: string,
-	resolveConfig: Record<string, FileTypeResolverProcessed>,
-	fromRp = false
+function isCorrectResolver(
+	match: string | ((node: INode) => boolean),
+	node: INode
 ) {
-	return resolveConfig[get(relPath, fromRp)] ?? {}
+	if (typeof match === 'string') {
+		if (match.startsWith('RP/') || match.startsWith('BP/'))
+			return node.matchPath.startsWith(match)
+		return node.relPath.startsWith(match)
+	}
+	return match(node)
+}
+
+function getCurrentResolver(node: INode, resolveConfig: FileTypeResolver[]) {
+	return (
+		resolveConfig.find(
+			(resolver) =>
+				!resolver.match || isCorrectResolver(resolver.match, node)
+		) ?? {}
+	)
 }
 
 export async function resolvePack(
@@ -46,14 +51,16 @@ export async function resolvePack(
 	relPath: string,
 	dependencyMap: Map<string, INode>,
 	keyRegistry: Map<string, INode>,
-	resolveConfig: Record<string, FileTypeResolverProcessed>,
+	resolveConfig: FileTypeResolver[],
 	fromRp = false
 ) {
-	const resolvePlugins = getPlugins(relPath, resolveConfig as any, fromRp)
-
+	// Create base node
 	const node = createNode(absPath, relPath, fromRp)
 	node.fileContent = await fs.readFile(node.absPath)
 	dependencyMap.set(absPath, node)
+
+	// Plugins
+	const resolvePlugins = getPlugins(node, resolveConfig)
 
 	await Promise.all(
 		resolvePlugins.map(async (plugin) => {
@@ -108,14 +115,10 @@ export async function buildAddOn({
 
 	// console.log(dependencyMap, keyRegistry)
 	const nodes = [...resolveDependencies(dependencyMap, keyRegistry)]
-	console.log(nodes.map((node) => node.relPath))
+	console.log(nodes.map((node) => node.matchPath))
 	// Second pass: Transform and move files
 	for (const node of nodes) {
-		const resolver = getCurrentResolver(
-			node.relPath,
-			resolveConfig as any,
-			node.isRpFile
-		)
+		const resolver = getCurrentResolver(node, resolveConfig as any)
 		const resolvePlugins = resolver.plugins ?? []
 
 		// We don't have any special parsing to do, just copy the file over

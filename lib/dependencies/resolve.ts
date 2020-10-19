@@ -1,7 +1,4 @@
-import { FileTypeResolverProcessed } from '../build'
-import { get } from '../fileType'
-import { createNode, INode } from './node'
-import { promises as fs } from 'fs'
+import { INode } from './node'
 
 function resolveSingle(
 	dep: INode,

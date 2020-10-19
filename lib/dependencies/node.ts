@@ -2,6 +2,7 @@ export interface INode {
 	readonly dependencies: Set<INode | string>
 	readonly absPath: string
 	readonly relPath: string
+	readonly matchPath: string
 	readonly isRpFile: boolean
 	fileContent: unknown
 
@@ -26,6 +27,9 @@ export function createNode(
 		},
 		get relPath() {
 			return relPath
+		},
+		get matchPath() {
+			return `${fromRp ? 'RP/' : 'BP/'}${relPath.replace(/\\/g, '/')}`
 		},
 		get dependencies() {
 			return dependencies
