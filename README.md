@@ -7,7 +7,7 @@ This package will replace the default bridge. cache system in the future.
 
 1. Run `npm i -g bridge-compiler`
 2. Create a config file for the compiler (`bridge.config.js`)
-3. Run `bridge-compiler --config ./bridge.config.js
+3. Run `bridge-compiler --config ./bridge.config.js` to compile the project
 
 ## Example Config
 In this example, the `bridge/` folder contains compiler plugins.
