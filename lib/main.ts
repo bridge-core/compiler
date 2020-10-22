@@ -1,5 +1,5 @@
 import { buildAddOn } from './build'
-declare const ENVIRONMENT: 'cli' | 'package'
+declare const ENVIRONMENT: 'node-cli' | 'package'
 
 let compilerOptions: {
 	[x: string]: unknown
@@ -9,7 +9,7 @@ let compilerOptions: {
 	orp: string
 }
 
-if (ENVIRONMENT === 'cli') {
+if (ENVIRONMENT === 'node-cli') {
 	;(async () => {
 		const yargs = await import('yargs')
 		compilerOptions = yargs

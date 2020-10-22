@@ -10,7 +10,7 @@ export default (commandLineArgs) => {
 		output: [
 			{
 				banner: '#!/usr/bin/env node',
-				intro: 'const ENVIRONMENT = "cli";',
+				intro: 'const ENVIRONMENT = "node-cli";',
 				file: pkg.cli,
 				format: 'cjs',
 			},

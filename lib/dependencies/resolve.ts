@@ -1,3 +1,4 @@
+import { option } from 'yargs'
 import { INode } from './node'
 
 function resolveSingle(
@@ -9,10 +10,14 @@ function resolveSingle(
 	unresolved.add(dep)
 
 	for (let d of dep.dependencies) {
-		if (typeof d === 'string') {
+		if (typeof d === 'string' || Array.isArray(d)) {
+			const optionalDep = Array.isArray(d) ? d[1] : false
+			d = d[0]
 			const node = keyRegistry.get(d)
-			if (!node)
+			if (!node && !optionalDep)
 				throw new Error(`Undefined lookup in key registry: "${d}"`)
+			else if (!node) continue
+
 			d = node
 		}
 

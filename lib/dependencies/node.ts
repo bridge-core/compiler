@@ -1,7 +1,7 @@
 import { fs } from '../fs'
 
 export interface INode {
-	readonly dependencies: Set<INode | string>
+	readonly dependencies: Set<INode | string | [string, boolean]>
 	readonly absPath: string
 	readonly relPath: string
 	readonly matchPath: string
@@ -18,7 +18,7 @@ export function createNode(
 	relPath: string,
 	fromRp = false
 ): INode {
-	let dependencies = new Set<INode | string>()
+	let dependencies = new Set<INode | string | [string, boolean]>()
 	let fileContent: unknown
 	let savePath: string
 
@@ -51,10 +51,10 @@ export function createNode(
 			savePath = val
 		},
 
-		add(dep: INode | string) {
+		add(dep: INode | string | [string, boolean]) {
 			dependencies.add(dep)
 		},
-		remove(dep: INode | string) {
+		remove(dep: INode | string | [string, boolean]) {
 			dependencies.delete(dep)
 		},
 	}
