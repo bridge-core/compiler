@@ -1,5 +1,5 @@
 {
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"author": "solvedDev",
 	"name": "bridge-compiler",
 	"description": "Minecraft add-on utility. Powers bridge.'s custom addon syntax",
