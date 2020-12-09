@@ -1,4 +1,4 @@
-import { fs } from '../fs'
+import { join } from 'https://deno.land/std@0.74.0/path/mod.ts'
 
 export interface INode {
 	readonly dependencies: Set<INode | string | [string, boolean]>
@@ -27,13 +27,13 @@ export function createNode(
 			return fromRp
 		},
 		get absPath() {
-			return absPath
+			return absPath.replace(/\\/g, '/')
 		},
 		get relPath() {
-			return relPath
+			return relPath.replace(/\\/g, '/')
 		},
 		get matchPath() {
-			return fs.join(fromRp ? 'RP' : 'BP', relPath.replace(/\\/g, '/'))
+			return join(fromRp ? 'RP' : 'BP', relPath.replace(/\\/g, '/'))
 		},
 		get dependencies() {
 			return dependencies

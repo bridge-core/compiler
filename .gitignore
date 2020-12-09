@@ -1,5 +1,0 @@
-node_modules
-tsconfig.tsbuildinfo
-
-bin
-!bin/main.cjs.js

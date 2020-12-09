@@ -1,28 +1,21 @@
-import { fs } from './fs'
+import { join } from 'https://deno.land/std@0.74.0/path/mod.ts'
 
 export async function iterateDir(
 	absPath: string,
 	relPath: string,
 	callback: (absPath: string, relPath: string) => Promise<void>
 ) {
-	let dirents = await fs.readdir(absPath, { withFileTypes: true })
-	let filePaths: [string, string][] = []
-
-	await Promise.all(
-		dirents.map(async (dirent) => {
-			if (dirent.isFile())
-				await callback(
-					fs.join(absPath, dirent.name),
-					fs.join(relPath, dirent.name)
-				)
-			else
-				await iterateDir(
-					fs.join(absPath, dirent.name),
-					fs.join(relPath, dirent.name),
-					callback
-				)
-		})
-	)
-
-	return filePaths
+	for await (const dirEntry of Deno.readDir(absPath)) {
+		if (dirEntry.isFile)
+			await callback(
+				join(absPath, dirEntry.name),
+				join(relPath, dirEntry.name)
+			)
+		else
+			await iterateDir(
+				join(absPath, dirEntry.name),
+				join(relPath, dirEntry.name),
+				callback
+			)
+	}
 }

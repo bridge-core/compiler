@@ -1,10 +1,10 @@
-import { TCompilerOptions } from './main'
-import { iterateDir } from './iterateDir'
-import { createNode, INode } from './dependencies/node'
-import { resolveDependencies } from './dependencies/resolve'
-import { fs, IFS, setFS } from './fs'
+import { ICompilerOptions, IPackTypes } from './main.ts'
+import { iterateDir } from './iterateDir.ts'
+import { createNode, INode } from './dependencies/node.ts'
+import { resolveDependencies } from './dependencies/resolve.ts'
+import { dirname, join } from 'https://deno.land/std@0.74.0/path/mod.ts'
 
-export interface FileTypeResolver {
+export interface IFileTypeResolver {
 	match?: string | ((node: INode) => boolean)
 	doNotTransfer?: boolean
 	plugins?: ICompilerPlugin[]
@@ -20,145 +20,154 @@ export interface ICompilerPlugin {
 	afterTransform?: (node: INode) => Promise<unknown> | unknown
 }
 
-function getPlugins(node: INode, resolveConfig: FileTypeResolver[]) {
-	return getCurrentResolver(node, resolveConfig).plugins ?? []
-}
+export class AddOnBuilder {
+	protected input: IPackTypes
+	protected output: IPackTypes
+	protected resolveConfig: IFileTypeResolver[]
+	protected dependencyMap = new Map<string, INode>()
+	protected keyRegistry = new Map<string, INode>()
 
-function isCorrectResolver(
-	match: string | ((node: INode) => boolean),
-	node: INode
-) {
-	if (typeof match === 'string') {
-		if (match.startsWith('RP/') || match.startsWith('BP/'))
-			return node.matchPath.startsWith(match)
-		return node.relPath.startsWith(match)
+	constructor({
+		input: { behaviorPack, resourcePack } = {},
+		output: {
+			behaviorPack: oBehaviorPack,
+			resourcePack: oResourcePack,
+		} = {},
+		resolve: resolveConfig,
+	}: Partial<ICompilerOptions>) {
+		if (!oBehaviorPack || !oResourcePack || !behaviorPack || !resourcePack)
+			throw new Error(`Missing required config option!`)
+
+		this.input = {
+			behaviorPack,
+			resourcePack,
+		}
+		this.output = {
+			behaviorPack: oBehaviorPack,
+			resourcePack: oResourcePack,
+		}
+		this.resolveConfig = resolveConfig ?? []
 	}
-	return match(node)
-}
 
-function getCurrentResolver(node: INode, resolveConfig: FileTypeResolver[]) {
-	return (
-		resolveConfig.find(
-			(resolver) =>
-				!resolver.match || isCorrectResolver(resolver.match, node)
-		) ?? {}
-	)
-}
+	async build() {
+		await this.initOutputDirs()
 
-export async function resolvePack(
-	absPath: string,
-	relPath: string,
-	dependencyMap: Map<string, INode>,
-	keyRegistry: Map<string, INode>,
-	resolveConfig: FileTypeResolver[],
-	fromRp = false,
-	obp: string,
-	orp: string
-) {
-	// Create base node
-	const node = createNode(absPath, relPath, fromRp)
-	node.fileContent = await fs.readFile(node.absPath)
-	node.savePath = fs.join(node.isRpFile ? orp : obp, node.relPath)
-	dependencyMap.set(absPath, node)
-
-	// Plugins
-	const resolvePlugins = getPlugins(node, resolveConfig)
-
-	await Promise.all(
-		resolvePlugins.map(async (plugin) => {
-			const transformedFile = await plugin.afterRead?.(node)
-			if (transformedFile) node.fileContent = transformedFile
-		})
-	)
-
-	await Promise.all(
-		resolvePlugins.map((plugin) =>
-			plugin.resolveDependencies?.(node, keyRegistry)
+		// First pass: Generate dependency map
+		await iterateDir(this.input.behaviorPack, '.', (absPath, relPath) =>
+			this.resolvePack(absPath, relPath)
 		)
-	)
-}
-
-export async function buildAddOn(
-	{ bp, obp, rp, orp, resolve: resolveConfig }: TCompilerOptions,
-	fsArg: IFS
-) {
-	setFS(fsArg)
-	// Delete old output
-	await Promise.all([
-		fs.rmdir(obp, { recursive: true }),
-		fs.rmdir(orp, { recursive: true }),
-	])
-	// Create output directories
-	await Promise.all([
-		fs.mkdir(obp, { recursive: true }),
-		fs.mkdir(orp, { recursive: true }),
-	]).catch(() => {})
-
-	const dependencyMap = new Map<string, INode>()
-	const keyRegistry = new Map<string, INode>()
-
-	// First pass: Generate dependency map
-	await iterateDir(bp, '.', (absPath, relPath) =>
-		resolvePack(
-			absPath,
-			relPath,
-			dependencyMap,
-			keyRegistry,
-			resolveConfig as any,
-			false,
-			obp,
-			orp
+		await iterateDir(this.input.resourcePack, '.', (absPath, relPath) =>
+			this.resolvePack(absPath, relPath, true)
 		)
-	)
-	await iterateDir(rp, '.', (absPath, relPath) =>
-		resolvePack(
-			absPath,
-			relPath,
-			dependencyMap,
-			keyRegistry,
-			resolveConfig as any,
-			true,
-			obp,
-			orp
+
+		const nodes = [
+			...resolveDependencies(this.dependencyMap, this.keyRegistry),
+		]
+		// Second pass: Transform and move files
+		for (const node of nodes) {
+			const resolver = this.getCurrentResolver(node, this.resolveConfig)
+			const resolvePlugins = resolver.plugins ?? []
+
+			// We don't have any special parsing to do, just copy the file over
+			if (resolvePlugins.length === 0 && !resolver.doNotTransfer) {
+				try {
+					await Deno.mkdir(dirname(node.savePath), {
+						recursive: true,
+					})
+				} catch {}
+
+				await Deno.copyFile(node.absPath, node.savePath)
+
+				continue
+			}
+
+			// "transform" pass
+			for (const plugin of resolvePlugins) {
+				const transformedFile = await plugin.transform?.(node)
+				if (transformedFile) node.fileContent = transformedFile
+			}
+			// "afterTransform" pass
+			for (const plugin of resolvePlugins.reverse()) {
+				const transformedFile = await plugin.afterTransform?.(node)
+				if (transformedFile) node.fileContent = transformedFile
+			}
+
+			// Write file to destination
+			if (!resolver.doNotTransfer) {
+				try {
+					await Deno.mkdir(dirname(node.savePath), {
+						recursive: true,
+					})
+				} catch {}
+
+				await Deno.writeFile(
+					node.savePath,
+					node.fileContent as Uint8Array
+				)
+			}
+		}
+	}
+
+	async resolvePack(absPath: string, relPath: string, fromRp = false) {
+		// Create base node
+		const node = createNode(absPath, relPath, fromRp)
+		node.fileContent = await Deno.readFile(node.absPath)
+		node.savePath = join(
+			node.isRpFile ? this.output.resourcePack : this.output.behaviorPack,
+			node.relPath
 		)
-	)
+		this.dependencyMap.set(absPath, node)
 
-	// console.log(dependencyMap, keyRegistry)
-	const nodes = [...resolveDependencies(dependencyMap, keyRegistry)]
-	// Second pass: Transform and move files
-	for (const node of nodes) {
-		const resolver = getCurrentResolver(node, resolveConfig as any)
-		const resolvePlugins = resolver.plugins ?? []
+		// Plugins
+		const resolvePlugins = this.getPlugins(node, this.resolveConfig)
 
-		// We don't have any special parsing to do, just copy the file over
-		if (resolvePlugins.length === 0 && !resolver.doNotTransfer) {
-			try {
-				await fs.mkdir(fs.dirname(node.savePath), { recursive: true })
-			} catch {}
+		await Promise.all(
+			resolvePlugins.map(async (plugin) => {
+				const transformedFile = await plugin.afterRead?.(node)
+				if (transformedFile) node.fileContent = transformedFile
+			})
+		)
 
-			await fs.copyFile(node.absPath, node.savePath)
+		await Promise.all(
+			resolvePlugins.map((plugin) =>
+				plugin.resolveDependencies?.(node, this.keyRegistry)
+			)
+		)
+	}
 
-			continue
+	async initOutputDirs() {
+		// Delete old output
+		await Promise.all([
+			Deno.remove(this.output.behaviorPack, { recursive: true }),
+			Deno.remove(this.output.resourcePack, { recursive: true }),
+		])
+		// Create output directories
+		await Promise.all([
+			Deno.mkdir(this.output.behaviorPack, { recursive: true }),
+			Deno.mkdir(this.output.resourcePack, { recursive: true }),
+		]).catch(() => {})
+	}
+
+	getPlugins(node: INode, resolveConfig: IFileTypeResolver[]) {
+		return this.getCurrentResolver(node, resolveConfig).plugins ?? []
+	}
+
+	isCorrectResolver(match: string | ((node: INode) => boolean), node: INode) {
+		if (typeof match === 'string') {
+			if (match.startsWith('RP/') || match.startsWith('BP/'))
+				return node.matchPath.startsWith(match)
+			return node.relPath.startsWith(match)
 		}
+		return match(node)
+	}
 
-		// "transform" pass
-		for (const plugin of resolvePlugins) {
-			const transformedFile = await plugin.transform?.(node)
-			if (transformedFile) node.fileContent = transformedFile
-		}
-		// "afterTransform" pass
-		for (const plugin of resolvePlugins.reverse()) {
-			const transformedFile = await plugin.afterTransform?.(node)
-			if (transformedFile) node.fileContent = transformedFile
-		}
-
-		// Write file to destination
-		if (!resolver.doNotTransfer) {
-			try {
-				await fs.mkdir(fs.dirname(node.savePath), { recursive: true })
-			} catch {}
-
-			await fs.writeFile(node.savePath, node.fileContent)
-		}
+	getCurrentResolver(node: INode, resolveConfig: IFileTypeResolver[]) {
+		return (
+			resolveConfig.find(
+				(resolver) =>
+					!resolver.match ||
+					this.isCorrectResolver(resolver.match, node)
+			) ?? {}
+		)
 	}
 }

@@ -1,5 +1,4 @@
-import { option } from 'yargs'
-import { INode } from './node'
+import { INode } from './node.ts'
 
 function resolveSingle(
 	dep: INode,

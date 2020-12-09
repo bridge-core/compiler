@@ -1,51 +1,42 @@
-import { buildAddOn } from './build'
-declare const ENVIRONMENT: 'node-cli' | 'package'
+import { join } from 'https://deno.land/std@0.74.0/path/mod.ts'
+import { AddOnBuilder, IFileTypeResolver } from './build.ts'
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor
 
-let compilerOptions: {
-	[x: string]: unknown
-	bp: string
-	obp: string
-	rp: string
-	orp: string
+export interface IPackTypes {
+	behaviorPack: string
+	resourcePack: string
 }
 
-if (ENVIRONMENT === 'node-cli') {
-	;(async () => {
-		const yargs = await import('yargs')
-		compilerOptions = yargs
-			.config(
-				'config',
-				'Run bridge-compiler with the given config',
-				(path) => require(path)
-			)
-			.usage('Usage: bridge-compiler --config <path>')
-			.option('bp', {
-				describe: 'Path to your behavior pack',
-				type: 'string',
-				demandOption: true,
-			})
-			.option('obp', {
-				alias: 'outputbp',
-				describe: 'Where to save the compiled behavior pack',
-				type: 'string',
-				demandOption: true,
-			})
-			.option('rp', {
-				describe: 'Path to your resource pack',
-				type: 'string',
-				demandOption: true,
-			})
-			.option('orp', {
-				alias: 'outputrp',
-				describe: 'Where to save the compiled resource pack',
-				type: 'string',
-				demandOption: true,
-			}).argv
-
-		buildAddOn(compilerOptions, { ...require('fs'), ...require('path') })
-	})()
+export interface ICompilerOptions {
+	input: Partial<IPackTypes>
+	output: Partial<IPackTypes>
+	resolve?: IFileTypeResolver[]
 }
 
-export type TCompilerOptions = typeof compilerOptions
+if (import.meta.main) {
+	const require = async (path: string) => {
+		const scriptFile = await Deno.readTextFile(join(Deno.cwd(), path))
+		const scriptFunc = new AsyncFunction('require', 'provide', scriptFile)
 
-export { buildAddOn } from './build'
+		let modExport: Record<string, unknown> | unknown = {}
+		let hadDefaultExport = false
+		await scriptFunc(require, (keyOrVal: unknown, val?: unknown) => {
+			if (val && typeof keyOrVal === 'string' && !hadDefaultExport)
+				return ((modExport as Record<string, unknown>)[keyOrVal] = val)
+
+			hadDefaultExport = true
+			modExport = val
+		})
+		return modExport
+	}
+
+	const scriptFile = await Deno.readTextFile(
+		join(Deno.cwd(), './bridge.config.js')
+	)
+	const scriptFunc = new AsyncFunction('config', 'require', scriptFile)
+	scriptFunc((config: ICompilerOptions) => {
+		new AddOnBuilder(config).build()
+	}, require)
+}
+
+export { AddOnBuilder } from './build.ts'
