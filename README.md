@@ -1,3 +1,7 @@
+# IMPORTANT
+This compiler is currently outdated. For the new API shape see the [Plugins.ts](https://github.com/bridge-core/editor/blob/dev/src/components/Compiler/Worker/Plugins.ts#L18) file. We will update this repository to create a CLI for compiling bridge. projects soon.
+
+
 # bridge-compiler
 Provides the architecture to compile bridge.'s custom syntax without the use of a cache in the background.
 
