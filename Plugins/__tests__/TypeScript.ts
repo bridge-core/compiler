@@ -1,6 +1,6 @@
 import { TCompilerPlugin } from '../../Plugins.ts'
 import { TypeScriptPlugin } from '../TypeScript.ts'
-import { FileSystem } from './FileSystem.ts'
+import { FileSystem } from '../../FileSystem.ts'
 
 describe('TypeScript Compiler Plugin', () => {
 	const fileSystem = new FileSystem()

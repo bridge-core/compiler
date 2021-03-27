@@ -1,7 +1,7 @@
 import { TCompilerPluginFactory } from '../../Plugins.ts'
 import { CustomMoLang } from 'molang'
 import { setObjectAt } from '../../util/walkObject.ts'
-import json5 from 'json5'
+import json5 from "https://deno.land/x/json5/mod.ts"
 
 export const MoLangPlugin: TCompilerPluginFactory<{
 	include: Record<string, string[]>
