@@ -1,6 +1,6 @@
 import { TCompilerPlugin } from '../../Plugins.ts'
 import { CustomEntityComponentPlugin } from '../CustomComponent/Plugin.ts'
-import { FileSystem } from '/@/components/FileSystem/FileSystem'
+import { FileSystem } from './FileSystem.ts'
 
 describe('CustomComponent Compiler Plugin', () => {
 	const fileSystem = new FileSystem()

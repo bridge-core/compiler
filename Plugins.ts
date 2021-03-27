@@ -1,5 +1,5 @@
 import { runAsync } from '/@/components/Extensions/Scripts/run'
-import { FileSystem } from '/@/components/FileSystem/FileSystem'
+import { FileSystem } from './FileSystem.ts'
 import { ComMojangRewrite } from './Plugins/ComMojangRewrite.ts'
 import { Maybe } from '/@/types/Maybe'
 import { TypeScriptPlugin } from './Plugins/TypeScript.ts'

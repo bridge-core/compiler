@@ -1,6 +1,6 @@
 import { TCompilerPlugin } from '../../Plugins.ts'
 import { ComMojangRewrite } from '../ComMojangRewrite.ts'
-import { FileSystem } from '/@/components/FileSystem/FileSystem'
+import { FileSystem } from './FileSystem.ts'
 
 describe('ComMojangRewrite Compiler Plugin', () => {
 	const fileSystem = new FileSystem()
