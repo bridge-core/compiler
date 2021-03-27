@@ -1,4 +1,4 @@
-import JSON5 from "https://deno.land/x/json5/mod.ts"
+import JSON5 from "https://cdn.skypack.dev/json5"
 import { join } from './util/path.ts'
 
 export class FileSystem {

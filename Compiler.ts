@@ -2,8 +2,9 @@ import { TCompilerHook, TCompilerPlugin } from './Plugins.ts'
 import { resolveFileOrder } from './Resolver.ts'
 import { dirname } from './util/path.ts'
 import { CompilerService } from './Service.ts'
-import isGlob from 'is-glob'
-import { isMatch } from 'micromatch'
+import isGlob from 'https://cdn.skypack.dev/is-glob'
+import micromatch from 'https://cdn.skypack.dev/micromatch'
+import { FileSystem } from "./FileSystem.ts";
 
 export interface IFileData {
 	isLoaded?: boolean
@@ -26,12 +27,8 @@ export interface ISaveFile {
 
 export class Compiler {
 	protected files = new Map<string, IFileData>()
-
+	protected fileSystem: FileSystem
 	constructor(protected parent: CompilerService) {}
-
-	protected get fileSystem() {
-		return this.parent.fileSystem
-	}
 	protected get plugins() {
 		return this.parent.getPlugins()
 	}
@@ -128,7 +125,7 @@ export class Compiler {
 			// For every glob
 			for (const glob of file.requiresGlobs.values()) {
 				// If any filePath matches
-				if (testFiles.some((filePath) => isMatch(filePath, glob)))
+				if (testFiles.some((filePath) => micromatch.isMatch(filePath, glob)))
 					// Also resolve the file with the glob imports later
 					files.add(file.filePath)
 			}
@@ -225,7 +222,7 @@ export class Compiler {
 				// Add files which match glob as dependencies
 				const matchingFiles = [
 					...new Set([...this.files.keys(), ...files]),
-				].filter((filePath) => isMatch(filePath, dependency))
+				].filter((filePath) => micromatch.isMatch(filePath, dependency))
 				matchingFiles.forEach((filePath) => resolvedDeps.add(filePath))
 
 				// Add the glob import to file obj

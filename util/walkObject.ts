@@ -1,4 +1,4 @@
-import { isMatch } from 'micromatch'
+import micromatch from 'https://cdn.skypack.dev/micromatch'
 
 export function walkObject(
 	path: string,
@@ -28,7 +28,7 @@ function _walkObject(
 		const collectedPaths = new Set<string>()
 		collectAllPaths('', current, collectedPaths)
 		for (const path of collectedPaths) {
-			if (isMatch(path, matcher)) {
+			if (micromatch.isMatch(path, matcher)) {
 				_walkObject(path.split('/'), current, onReach)
 			}
 		}

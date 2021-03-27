@@ -1,4 +1,4 @@
-import * as Comlink from 'comlink'
+import * as Comlink from 'https://cdn.skypack.dev/comlink'
 import { TaskService } from '/@/components/TaskManager/WorkerTask'
 import { loadPlugins, TCompilerPlugin } from './Plugins.ts'
 import { FileSystem } from './FileSystem.ts'

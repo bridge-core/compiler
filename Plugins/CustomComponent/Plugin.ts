@@ -1,5 +1,5 @@
-import json5 from 'json5'
-import { get } from 'lodash'
+import json5 from "https://cdn.skypack.dev/json5"
+import { get } from 'https://cdn.skypack.dev/lodash'
 import { TCompilerPluginFactory } from '../../Plugins.ts'
 import { Component } from './Component.ts'
 import { findCustomComponents } from './findComponents.ts'
@@ -66,11 +66,11 @@ export function createCustomComponentPlugin({
 					return component
 				}
 			},
-			async registerAliases(filePath, fileContent) {
+			registerAliases(filePath, fileContent) {
 				if (isComponent(filePath))
 					return [`${fileType}Component#${fileContent.name}`]
 			},
-			async require(filePath, fileContent) {
+			require(filePath, fileContent) {
 				if (isPlayerFile(filePath, getAliases))
 					return ['BP/components/item/**/*.js', 'BP/items/**/*.json']
 

@@ -3,7 +3,7 @@ import { FileSystem } from './FileSystem.ts'
 import { ComMojangRewrite } from './Plugins/ComMojangRewrite.ts'
 import { Maybe } from '/@/types/Maybe'
 import { TypeScriptPlugin } from './Plugins/TypeScript.ts'
-import json5 from 'json5'
+import json5 from "https://cdn.skypack.dev/json5"
 import {
 	CustomBlockComponentPlugin,
 	CustomEntityComponentPlugin,
