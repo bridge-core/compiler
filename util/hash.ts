@@ -1,6 +1,7 @@
-// Node doesn't know TextDecoder so we skip it for our tests
-const textDecoder = isNode() ? { encode: () => undefined } : new TextEncoder()
+import {createHash} from "https://deno.land/std@0.80.0/hash/mod.ts";
 
+// Node doesn't know TextDecoder so we skip it for our tests
+const textDecoder = new TextEncoder()
 export async function hashString(str: string) {
     const rawData = textDecoder.encode(str)
 	if (!rawData) return ''
@@ -10,21 +11,14 @@ export async function hashString(str: string) {
 	return toHexString(hashedData)
 }
 
-export async function hash(data: Uint8Array) {
-    return new Uint8Array(await crypto.subtle.digest('sha-1', data))
+export function hash(data: Uint8Array) {
+    const hasher = createHash('sha1')
+    hasher.update(data)
+    return new Uint8Array(hasher.digest())
 }
 
 function toHexString(data: Uint8Array) {
     return Array.from(data)
     .map(b => ('00' + b.toString(16)).slice(-2))
     .join('')
-}
-
-function isNode() {
-    return false;
-    // try {
-    //     return typeof process !== 'undefined' && process.release.name === 'node'
-    // } catch {
-    //     return false
-    // }
 }

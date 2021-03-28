@@ -1,7 +1,6 @@
-import { runAsync } from '/@/components/Extensions/Scripts/run'
-import { FileSystem } from './FileSystem.ts'
+import { FileSystem, FileSystemFileHandle, FileSystemWriteChunkType } from './FileSystem.ts'
 import { ComMojangRewrite } from './Plugins/ComMojangRewrite.ts'
-import { Maybe } from '/@/types/Maybe'
+import { Maybe } from './util/maybe.ts'
 import { TypeScriptPlugin } from './Plugins/TypeScript.ts'
 import json5 from "https://cdn.skypack.dev/json5"
 import {
@@ -12,7 +11,6 @@ import {
 import { SimpleRewrite } from './Plugins/simpleRewrite.ts'
 import { EntityIdentifierAlias } from './Plugins/EntityIdentifier.ts'
 import { MoLangPlugin } from './Plugins/MoLang/Plugin.ts'
-import { ProjectConfig } from '../../Projects/ProjectConfig'
 
 export type TCompilerHook = keyof TCompilerPlugin
 export type TCompilerPlugin = {
@@ -108,8 +106,9 @@ export async function loadPlugins({
 	getAliases,
 }: ILoadPLugins) {
 	const plugins = new Map<string, TCompilerPluginFactory>()
-	const projectConfig = new ProjectConfig(localFs)
-	const targetVersion = await projectConfig.get('targetVersion')
+	// const projectConfig = new ProjectConfig(localFs)
+	// const targetVersion = await projectConfig.get('targetVersion')
+	const { targetVersion } = await localFs.readJSON(`bridge/config.json`)
 
 	plugins.set('simpleRewrite', SimpleRewrite)
 	plugins.set('comMojangRewrite', ComMojangRewrite)
@@ -121,7 +120,7 @@ export async function loadPlugins({
 	plugins.set('moLang', MoLangPlugin)
 
 	for (const [pluginId, pluginPath] of Object.entries(pluginPaths ?? {})) {
-		let file: File
+		let file: Uint8Array
 		try {
 			file = await fileSystem.readFile(pluginPath)
 		} catch (err) {
@@ -130,7 +129,7 @@ export async function loadPlugins({
 
 		const module: { exports?: TCompilerPluginFactory } = {}
 		await runAsync(
-			await file.text(),
+			await file.toString(),
 			[
 				undefined,
 				module,
@@ -168,4 +167,13 @@ export async function loadPlugins({
 	}
 
 	return loadedPlugins
+}
+
+
+function runAsync(
+	script: string,
+	env: unknown | unknown[],
+	envNames = ['Bridge']
+): Promise<any> {
+	return new Function(...envNames, `return (async () => {\n${script}\n})()`)(...(Array.isArray(env) ? env : [env]))
 }

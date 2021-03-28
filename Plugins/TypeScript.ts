@@ -1,4 +1,4 @@
-import { transpile } from 'typescript'
+import typescript from 'https://cdn.skypack.dev/typescript' // FIXME: broken, need an alternative to transpile
 import { TCompilerPluginFactory } from '../Plugins.ts'
 import { hashString } from '../util/hash.ts'
 
@@ -18,7 +18,7 @@ export const TypeScriptPlugin: TCompilerPluginFactory = () => ({
 	load(filePath, fileContent) {
 		if (!filePath.endsWith('.ts')) return
 
-		return transpile(fileContent, {
+		return typescript.transpile(fileContent, {
 			target: 99,
 			isolatedModules: true,
 		})

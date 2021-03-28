@@ -1,7 +1,136 @@
 import JSON5 from "https://cdn.skypack.dev/json5"
 import { join } from './util/path.ts'
+abstract class BaseFileSystemHandle {
+    readonly kind: 'file' | 'directory'
+    readonly name: string
+
+    protected path: string
+    constructor(kind: 'file' | 'directory', name: string, path: string) {
+        this.kind = kind
+        this.name = name
+        this.path = path
+    }
+
+    isSameEntry(other: BaseFileSystemHandle): Promise<boolean> | boolean {
+        return this.path === other.path
+    }
+    // deno-lint-ignore no-explicit-any
+    queryPermission(descriptor: any) {
+        return "granted"
+    }
+
+    // deno-lint-ignore no-explicit-any
+    requestPermission(descriptor: any) {
+        return "granted"
+    }
+}
+
+export class FileSystemWritableFileStream {
+    // TODO: implement for Deno
+    protected file: Deno.File
+    protected name: string
+    
+    constructor(file: Deno.File, name: string) {
+        this.file = file
+        this.name = name
+    }
+    async write(data: Uint8Array) { // FIXME: this needs to accept FileSystemWriteChunkType not Uint8Array
+        // let internalData: ArrayBuffer
+        // if((data as ArrayBufferView).buffer) internalData = (data as ArrayBufferView).buffer
+        // else if (data instanceof Blob) internalData = await data.arrayBuffer()
+        // else if(data instanceof ArrayBuffer) internalData = data
+        // else if(typeof data === 'string') internalData = data.
+        await Deno.write(this.file.rid, data)
+    }
+    async seek(position: number) {
+        await Deno.seek(this.file.rid, position, Deno.SeekMode.Start)
+    }
+    async truncate(size: number) { // Deno doesn't seem to have a method for this
+        this.file.close()
+        await Deno.truncate(this.name, size)
+        this.file = await Deno.open(this.name)
+    }
+    close() {
+        this.file.close()
+    }
+}
+
+export class File {
+
+    name: string
+    path: string
+    protected content: Uint8Array
+    constructor(file: Deno.File, name: string, path: string) {
+        this.name = name
+        this.path = path
+        this.content = file.read() // current spot
+    }
+    text() {
+        return this.content.toString()
+    }
+}
+
+// type WriteParams =
+//     | { type: 'write'; position?: number; data: BufferSource | Blob | string }
+//     | { type: 'seek'; position: number }
+//     | { type: 'truncate'; size: number }
+
+type FileSystemWriteChunkType = BufferSource | Blob | string// | WriteParams
+
+export class FileSystemFileHandle extends BaseFileSystemHandle {
+    readonly kind: 'file' = 'file'
+
+    protected file: File
+    constructor(name: string, path: string, file: Deno.File) {
+        super('file', name, path)
+        this.file = new File(file)
+    }
+
+    getFile(): Promise<File> | File {
+        return this.file
+    }
+
+    createWritable(options?: { keepExistingData: boolean }): Promise<FileSystemWritableFileStream> {
+        // TODO: ?
+    }
+}
+
+export class FileSystemDirectoryHandle extends BaseFileSystemHandle {
+    readonly kind: 'directory' = 'directory'
+
+    constructor(name: path, path: string) {
+        super('directory', name, path)
+    }
+
+    // TODO: implement Deno version
+
+    getFileHandle(name: string, options?: FileSystemGetFileOptions): Promise<FileSystemFileHandle>;
+    getDirectoryHandle(name: string, options?: FileSystemGetDirectoryOptions): Promise<FileSystemDirectoryHandle>;
+    removeEntry(name: string, options?: FileSystemRemoveOptions): Promise<void>;
+    resolve(possibleDescendant: FileSystemHandle): Promise<string[] | null>;
+
+    keys(): AsyncIterableIterator<string>;
+    values(): AsyncIterableIterator<FileSystemHandle>;
+    entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
+    [Symbol.asyncIterator]: FileSystemDirectoryHandle['entries'];
+}
+
 
 export class FileSystem {
+    baseDirectory: string
+    
+    constructor(baseDirectory: string) {
+        this.baseDirectory = baseDirectory
+    }
+    
+    getFileHandle(path: string, create = false): Promise<FileSystemFileHandle> {
+        // TODO: implement
+    }
+
+    getDirectoryHandle(path: string, { create, createOnce }: Partial<{ create: boolean; createOnce: boolean }> = {}): Promise<FileSystemDirectoryHandle> {
+        // TODO: implement
+    }
+
     async mkdir(path: string, options: Deno.MkdirOptions) {
         await Deno.mkdir(path, options)
         const arr = await this.readdir("test")

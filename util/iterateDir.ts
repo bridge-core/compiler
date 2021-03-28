@@ -1,20 +1,22 @@
+import { FileSystemDirectoryHandle,FileSystemFileHandle } from "../FileSystem.ts";
+
 export async function iterateDir(
-	baseDirectory: string,
+	baseDirectory: FileSystemDirectoryHandle,
 	callback: (
-		fileHandle: Deno.DirEntry,
+		fileHandle: FileSystemFileHandle,
 		path: string
 	) => Promise<void> | void,
 	path = ''
 ) {
-	for await (const handle of Deno.readDir(baseDirectory)) {
+	for await (const handle of baseDirectory.values()) {
 		const currentPath =
 			path.length === 0 ? handle.name : `${path}/${handle.name}`
 
-		if (handle.isFile) {
+		if (handle.kind === 'file') {
 			if (handle.name[0] === '.') continue
 			await callback(handle, currentPath)
-		} else if (handle.isDirectory) {
-			await iterateDir(handle.name, callback, currentPath)
+		} else if (handle.kind === 'directory') {
+			await iterateDir(handle, callback, currentPath)
 		}
 	}
 }

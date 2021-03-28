@@ -4,7 +4,7 @@ import { dirname } from './util/path.ts'
 import { CompilerService } from './Service.ts'
 import isGlob from 'https://cdn.skypack.dev/is-glob'
 import micromatch from 'https://cdn.skypack.dev/micromatch'
-import { FileSystem } from "./FileSystem.ts";
+import { FileSystem, FileSystemFileHandle } from "./FileSystem.ts";
 
 export interface IFileData {
 	isLoaded?: boolean
@@ -28,16 +28,20 @@ export interface ISaveFile {
 export class Compiler {
 	protected files = new Map<string, IFileData>()
 	protected fileSystem: FileSystem
-	constructor(protected parent: CompilerService) {}
-	protected get plugins() {
-		return this.parent.getPlugins()
+	constructor(baseDir: string) {
+		this.fileSystem = new FileSystem(baseDir)
+	}
+	protected get plugins(): Array<Array<never>> {
+		// return this.parent.getPlugins()
+		// TODO: get plugins
+		return []
 	}
 	getAliases(filePath: string) {
 		return [...(this.files.get(filePath)?.aliases ?? [])]
 	}
 
 	async runWithFiles(files: string[]) {
-		this.parent.progress.setTotal(5)
+		// this.parent.progress.setTotal(5)
 
 		await this.loadSavedFiles()
 		await this.runSimpleHook('buildStart')
@@ -47,17 +51,17 @@ export class Compiler {
 			if (!this.files.has(includeFile)) files.push(includeFile)
 		}
 
-		this.parent.progress.addToCurrent(1)
+		// this.parent.progress.addToCurrent(1)
 
 		await this.compileFiles(files)
 
 		await this.runSimpleHook('buildEnd')
-		this.parent.progress.addToCurrent(1)
+		// this.parent.progress.addToCurrent(1)
 		await this.processFileMap()
 	}
 	async compileFiles(files: string[]) {
 		const flatFiles = this.flatFiles(files, new Set())
-		this.parent.progress.setTotal(flatFiles.size * 2 + 5)
+		// this.parent.progress.setTotal(flatFiles.size * 2 + 5)
 
 		this.addMatchingGlobImporters(flatFiles)
 
@@ -83,7 +87,7 @@ export class Compiler {
 				})
 			}
 		} catch {}
-		this.parent.progress.addToCurrent(1)
+		// this.parent.progress.addToCurrent(1)
 	}
 	flatFiles(
 		files: string[],
@@ -110,7 +114,7 @@ export class Compiler {
 
 			ignoreSet.delete(filePath)
 
-			this.parent.progress.addToCurrent(1)
+			// this.parent.progress.addToCurrent(1)
 		}
 
 		return fileSet
@@ -163,7 +167,7 @@ export class Compiler {
 				}
 				this.files.set(filePath, file)
 
-				this.parent.progress.addToCurrent(2)
+				// this.parent.progress.addToCurrent(2)
 				continue
 			}
 
@@ -188,7 +192,7 @@ export class Compiler {
 				requiresGlobs: new Set(),
 			})
 
-			this.parent.progress.addToCurrent(1)
+			// this.parent.progress.addToCurrent(1)
 		}
 	}
 
@@ -297,7 +301,7 @@ export class Compiler {
 			await this.fileSystem.writeFile(file.saveFilePath, writeData)
 
 			file.isDone = true
-			this.parent.progress.addToCurrent(1)
+			// this.parent.progress.addToCurrent(1)
 		}
 	}
 
@@ -325,7 +329,7 @@ export class Compiler {
 
 		// Save files map
 		await this.fileSystem.writeJSON('bridge/files.json', filesObject, true)
-		this.parent.progress.addToCurrent(1)
+		// this.parent.progress.addToCurrent(1)
 	}
 
 	protected async copyFile(
