@@ -56,15 +56,20 @@ export class FileSystemWritableFileStream {
     }
 }
 
-export class File {
+export class File extends Blob {
 
-    name: string
-    path: string
+    readonly name: string
+    readonly lastModified: number;
     file: Deno.File
-    constructor(file: Deno.File, name: string, path: string) {
+
+    // TODO: test this
+    constructor(file: Deno.File, name: string) {
+        const arr = new Uint8Array()
+        file.read(arr)
+        super([arr.buffer])
         this.name = name
-        this.path = path
         this.file = file
+        this.lastModified = 0 // FIXME: get lastModified properly
     }
     async text() {
         const data = new Uint8Array()
@@ -78,7 +83,7 @@ export class File {
 //     | { type: 'seek'; position: number }
 //     | { type: 'truncate'; size: number }
 
-type FileSystemWriteChunkType = BufferSource | Blob | string// | WriteParams
+export type FileSystemWriteChunkType = BufferSource | Blob | string// | WriteParams
 
 export class FileSystemFileHandle extends BaseFileSystemHandle {
     readonly kind: 'file' = 'file'
@@ -86,7 +91,7 @@ export class FileSystemFileHandle extends BaseFileSystemHandle {
     protected file: File
     constructor(name: string, path: string, file: Deno.File) {
         super('file', name, path)
-        this.file = new File(file, name, path)
+        this.file = new File(file, name)
     }
 
     getFile(): Promise<File> | File {
