@@ -11,6 +11,7 @@ import {
 import { SimpleRewrite } from './Plugins/simpleRewrite.ts'
 import { EntityIdentifierAlias } from './Plugins/EntityIdentifier.ts'
 import { MoLangPlugin } from './Plugins/MoLang/Plugin.ts'
+import { runAsync } from './util/run.ts'
 
 export type TCompilerHook = keyof TCompilerPlugin
 export type TCompilerPlugin = {
@@ -167,13 +168,4 @@ export async function loadPlugins({
 	}
 
 	return loadedPlugins
-}
-
-
-function runAsync(
-	script: string,
-	env: unknown | unknown[],
-	envNames = ['Bridge']
-): Promise<any> {
-	return new Function(...envNames, `return (async () => {\n${script}\n})()`)(...(Array.isArray(env) ? env : [env]))
 }

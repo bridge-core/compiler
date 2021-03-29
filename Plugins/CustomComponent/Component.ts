@@ -1,4 +1,4 @@
-import { run } from '/@/components/Extensions/Scripts/run'
+import { run } from '../../util/run.ts'
 import { deepMerge } from '../../util/deepmerge.ts'
 import { hashString } from '../../util/hash.ts'
 
