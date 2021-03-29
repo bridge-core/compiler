@@ -28,7 +28,6 @@ abstract class BaseFileSystemHandle {
 }
 
 export class FileSystemWritableFileStream {
-    // TODO: implement for Deno
     protected file: File
     protected name: string
     
@@ -117,7 +116,7 @@ export class FileSystemDirectoryHandle extends BaseFileSystemHandle {
         if(create) 
         try {
             Deno.mkdir(path)
-        } catch {}
+        } catch {/**/}
         this.children = Deno.readDir(path)
     }
 
