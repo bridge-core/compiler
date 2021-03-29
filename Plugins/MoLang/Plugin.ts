@@ -40,20 +40,20 @@ export const MoLangPlugin: TCompilerPluginFactory<{
 				return json5.parse(await file.text())
 			}
 		},
-		async load(filePath, fileContent) {
+		load(filePath, fileContent) {
 			if (isMoLangFile(filePath) && fileContent) {
 				// Load the custom MoLang functions
 				customMoLang.parse(fileContent)
 			}
 		},
-		async require(filePath) {
+		require(filePath) {
 			if (loadMoLangFrom(filePath)) {
 				// Register molang files as JSON file dependencies
 				return ['*/molang/**/*.molang']
 			}
 		},
 
-		async transform(filePath, fileContent) {
+		transform(filePath, fileContent) {
 			const includePaths = loadMoLangFrom(filePath)
 
 			if (includePaths && includePaths.length > 0) {

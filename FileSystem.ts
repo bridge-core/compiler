@@ -1,10 +1,12 @@
 import JSON5 from "https://cdn.skypack.dev/json5"
-import { join } from './util/path.ts'
+import { join, relative } from './util/path.ts'
+
+// FIXME: Inconsistent between DirectoryHandle and FileHandle: File constructor accepts the Deno.File while Directory constructor calls Deno.readDir itself
 abstract class BaseFileSystemHandle {
     readonly kind: 'file' | 'directory'
     readonly name: string
 
-    protected path: string
+    readonly path: string
     constructor(kind: 'file' | 'directory', name: string, path: string) {
         this.kind = kind
         this.name = name
@@ -96,24 +98,100 @@ export class FileSystemFileHandle extends BaseFileSystemHandle {
         return new FileSystemWritableFileStream(this.file, this.name)
     }
 }
-
+type FileSystemHandle = FileSystemFileHandle | FileSystemDirectoryHandle;
+interface FileSystemRemoveOptions {
+    recursive?: boolean
+}
+interface FileSystemGetFileOptions {
+    create?: boolean;
+}
+interface FileSystemGetDirectoryOptions {
+    create?: boolean;
+}
 export class FileSystemDirectoryHandle extends BaseFileSystemHandle {
     readonly kind: 'directory' = 'directory'
+    children: AsyncIterable<Deno.DirEntry>
 
-    constructor(name: string, path: string) {
+    constructor(name: string, path: string, create = false) {
         super('directory', name, path)
+        if(create) 
+        try {
+            Deno.mkdir(path)
+        } catch {}
+        this.children = Deno.readDir(path)
     }
 
-    // TODO: implement Deno version
+    async getFileHandle(name: string, options?: FileSystemGetFileOptions): Promise<FileSystemFileHandle> {
+        return new FileSystemFileHandle(name, join(this.path, name), await Deno.open(join(this.path, name)))
+    }
+    getDirectoryHandle(name: string, options?: FileSystemGetDirectoryOptions): FileSystemDirectoryHandle {
+        return new FileSystemDirectoryHandle(name, join(this.path, name), options?.create)
+    }
+    async removeEntry(name: string, options?: FileSystemRemoveOptions) {
+        await Deno.remove(join(this.path, name), options)
+    }
+    resolve(possibleDescendant: FileSystemHandle): string[] | null {
+        return relative(this.path, possibleDescendant.path).split('/')
+    }
 
-    getFileHandle(name: string, options?: FileSystemGetFileOptions): Promise<FileSystemFileHandle>;
-    getDirectoryHandle(name: string, options?: FileSystemGetDirectoryOptions): Promise<FileSystemDirectoryHandle>;
-    removeEntry(name: string, options?: FileSystemRemoveOptions): Promise<void>;
-    resolve(possibleDescendant: FileSystemHandle): Promise<string[] | null>;
-
-    keys(): AsyncIterableIterator<string>;
-    values(): AsyncIterableIterator<FileSystemHandle>;
-    entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
+    // FIXME: My best attempt on the iterators here, I'm not sure if it works
+    keys(): AsyncIterableIterator<string> {
+        const thing = this.children[Symbol.asyncIterator]()
+        const iterable: AsyncIterableIterator<string> =  {
+            next: async () => {
+                const next = await thing.next()
+                if(next.done) return { done: true, value: null }
+                const dirEntry = next.value
+                const ret: IteratorYieldResult<string> = {
+                    value: dirEntry.name,
+                    done: false
+                }
+                return ret
+            },
+            [Symbol.asyncIterator]: () => {
+                return iterable
+            }
+        }
+        return iterable
+    }
+    values(): AsyncIterableIterator<FileSystemHandle> {
+        const thing = this.children[Symbol.asyncIterator]()
+        const iterable: AsyncIterableIterator<FileSystemHandle> =  {
+            next: async () => {
+                const next = await thing.next()
+                if(next.done) return { done: true, value: null }
+                const dirEntry = next.value
+                const ret: IteratorYieldResult<FileSystemHandle> = {
+                    value: new FileSystemFileHandle(dirEntry.name, join(this.path, dirEntry.name), await Deno.open(join(this.path, dirEntry.name))),
+                    done: false
+                }
+                return ret
+            },
+            [Symbol.asyncIterator]: () => {
+                return iterable
+            }
+        }
+        return iterable
+    }
+    entries(): AsyncIterableIterator<[string, FileSystemHandle]> {
+        const thing = this.children[Symbol.asyncIterator]()
+        const iterable: AsyncIterableIterator<[string, FileSystemHandle]> =  {
+            next: async () => {
+                const next = await thing.next()
+                if(next.done) return { done: true, value: null }
+                const dirEntry = next.value
+                const ret: IteratorYieldResult<[string, FileSystemHandle]> = {
+                    value: [dirEntry.name, new FileSystemFileHandle(dirEntry.name, join(this.path, dirEntry.name), await Deno.open(join(this.path, dirEntry.name)))],
+                    done: false
+                }
+                return ret
+            },
+            [Symbol.asyncIterator]: () => {
+                return iterable
+            }
+        }
+        return iterable
+    }
     [Symbol.asyncIterator]: FileSystemDirectoryHandle['entries'];
 }
 

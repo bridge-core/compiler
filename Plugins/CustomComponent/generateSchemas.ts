@@ -1,6 +1,7 @@
 import { Component } from './Component.ts'
 import { App } from '/@/App'
 import { iterateDir } from '../../util/iterateDir.ts'
+import { FileSystemDirectoryHandle } from "../../FileSystem.ts";
 
 export async function generateComponentSchemas(fileType: string) {
 	const app = await App.getApp()
