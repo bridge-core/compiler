@@ -342,7 +342,7 @@ export class Compiler {
 		)
 
 		const writable = await copiedFileHandle.createWritable()
-		await writable.write(await originalFile.getFile())
+		await writable.write(new Uint8Array(await (await originalFile.getFile()).arrayBuffer())) // Not tested, may need to be reverted for compatibility
 		await writable.close()
 	}
 
