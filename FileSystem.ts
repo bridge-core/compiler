@@ -27,10 +27,10 @@ abstract class BaseFileSystemHandle {
 
 export class FileSystemWritableFileStream {
     // TODO: implement for Deno
-    protected file: Deno.File
+    protected file: File
     protected name: string
     
-    constructor(file: Deno.File, name: string) {
+    constructor(file: File, name: string) {
         this.file = file
         this.name = name
     }
@@ -40,18 +40,18 @@ export class FileSystemWritableFileStream {
         // else if (data instanceof Blob) internalData = await data.arrayBuffer()
         // else if(data instanceof ArrayBuffer) internalData = data
         // else if(typeof data === 'string') internalData = data.
-        await Deno.write(this.file.rid, data)
+        await Deno.write(this.file.file.rid, data)
     }
     async seek(position: number) {
-        await Deno.seek(this.file.rid, position, Deno.SeekMode.Start)
+        await Deno.seek(this.file.file.rid, position, Deno.SeekMode.Start)
     }
     async truncate(size: number) { // Deno doesn't seem to have a method for this
-        this.file.close()
+        this.file.file.close()
         await Deno.truncate(this.name, size)
-        this.file = await Deno.open(this.name)
+        this.file.file = await Deno.open(this.name)
     }
     close() {
-        this.file.close()
+        this.file.file.close()
     }
 }
 
@@ -59,14 +59,16 @@ export class File {
 
     name: string
     path: string
-    protected content: Uint8Array
+    file: Deno.File
     constructor(file: Deno.File, name: string, path: string) {
         this.name = name
         this.path = path
-        this.content = file.read() // current spot
+        this.file = file
     }
-    text() {
-        return this.content.toString()
+    async text() {
+        const data = new Uint8Array()
+        await this.file.read(data)
+        return data.toString()
     }
 }
 
@@ -83,22 +85,22 @@ export class FileSystemFileHandle extends BaseFileSystemHandle {
     protected file: File
     constructor(name: string, path: string, file: Deno.File) {
         super('file', name, path)
-        this.file = new File(file)
+        this.file = new File(file, name, path)
     }
 
     getFile(): Promise<File> | File {
         return this.file
     }
 
-    createWritable(options?: { keepExistingData: boolean }): Promise<FileSystemWritableFileStream> {
-        // TODO: ?
+    createWritable(options?: { keepExistingData: boolean }): FileSystemWritableFileStream {
+        return new FileSystemWritableFileStream(this.file, this.name)
     }
 }
 
 export class FileSystemDirectoryHandle extends BaseFileSystemHandle {
     readonly kind: 'directory' = 'directory'
 
-    constructor(name: path, path: string) {
+    constructor(name: string, path: string) {
         super('directory', name, path)
     }
 
@@ -123,12 +125,12 @@ export class FileSystem {
         this.baseDirectory = baseDirectory
     }
     
-    getFileHandle(path: string, create = false): Promise<FileSystemFileHandle> {
-        // TODO: implement
+    async getFileHandle(path: string, create = false) {
+        return new FileSystemFileHandle(path.split('/').pop()!, path, await Deno.open(path, { create, read: true, write: true }))
     }
 
-    getDirectoryHandle(path: string, { create, createOnce }: Partial<{ create: boolean; createOnce: boolean }> = {}): Promise<FileSystemDirectoryHandle> {
-        // TODO: implement
+    async getDirectoryHandle(path: string, { create, createOnce }: Partial<{ create: boolean; createOnce: boolean }> = {}) {
+        // return new FileSystemDirectoryHandle(path.split('/').pop()!, path, await Deno.open(path, { create, read: true, write: true }))
     }
 
     async mkdir(path: string, options: Deno.MkdirOptions) {
